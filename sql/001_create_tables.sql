@@ -1,12 +1,13 @@
 create table if not exists sources (
-    source_id text primary key,
+    source_id text not null,
     amc_name text not null,
     url text not null,
     source_type text not null,
     active boolean not null,
     validated_end_to_end boolean not null,
     created_at timestamp default current_timestamp,
-    updated_at timestamp default current_timestamp
+    updated_at timestamp default current_timestamp,
+    unique(source_id, url)
 );
 
 create table if not exists pipeline_runs (

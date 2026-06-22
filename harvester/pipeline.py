@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from harvester.classify.classifier import Classifier
 from harvester.config import load_sources
 from harvester.discovery.fixture_discovery import FixtureDiscovery
+from harvester.discovery.static_discovery import StaticDiscovery
 from harvester.download.downloader import Downloader
 from harvester.extract.text_fixture_extractor import TextFixtureExtractor
 from harvester.load.database import Database
@@ -12,6 +13,7 @@ from harvester.load.repository import Repository
 from harvester.publish.publisher import Publisher
 from harvester.settings import Settings
 from harvester.utils import new_id
+from harvester.validate.layout_fingerprint import LayoutFingerprintStore
 from harvester.validate.rules import ValidationError, validate_holdings
 
 
@@ -33,6 +35,12 @@ class Pipeline:
     settings: Settings = field(default_factory=Settings)
 
     def run_fixtures(self) -> PipelineStats:
+        return self._run(mode="fixtures")
+
+    def run_live_static(self) -> PipelineStats:
+        return self._run(mode="live-static")
+
+    def _run(self, mode: str) -> PipelineStats:
         self.settings.ensure_directories()
         db = Database(self.settings.warehouse_path)
         db.initialize(self.settings.schema_path)
@@ -42,22 +50,39 @@ class Pipeline:
         repo.create_run(run_id)
         try:
             sources = [source for source in load_sources(self.settings.source_config_path) if source.active]
-            discovery = FixtureDiscovery(self.settings.project_root)
+            fixture_discovery = FixtureDiscovery(self.settings.project_root)
+            static_discovery = StaticDiscovery(
+                timeout_seconds=self.settings.request_timeout_seconds,
+                retry_count=self.settings.retry_count,
+                retry_initial_delay_seconds=self.settings.retry_initial_delay_seconds,
+            )
             downloader = Downloader(self.settings.raw_dir, self.settings.request_timeout_seconds)
             classifier = Classifier(self.settings)
             extractor = TextFixtureExtractor()
             publisher = Publisher(db)
+            fingerprints = LayoutFingerprintStore(db)
 
             for source in sources:
                 stats.sources_checked += 1
-                docs = discovery.discover(source, run_id)
+                for url in source.urls:
+                    repo.upsert_source(source.source_id, source.amc_name, url, source.source_type, source.active, source.validated_end_to_end)
+                try:
+                    if mode == "fixtures":
+                        docs = fixture_discovery.discover(source, run_id)
+                    else:
+                        docs = static_discovery.discover(source, run_id)
+                except Exception as exc:
+                    stats.documents_quarantined += 1
+                    repo.add_quarantine(None, "source_discovery_failed", {"source_id": source.source_id, "error": str(exc)})
+                    repo.audit("source_degraded", "Discovery failed after retries", run_id, source_id=source.source_id, metadata={"error": str(exc)})
+                    continue
                 stats.documents_found += len(docs)
+                if mode != "fixtures" and not docs:
+                    repo.audit("source_empty", "No documents discovered for active source", run_id, source_id=source.source_id)
                 for doc in docs:
                     repo.insert_discovered(doc)
-                    content_sha_seen_before = False
                     raw = downloader.download(doc, run_id, already_seen=False)
-                    content_sha_seen_before = repo.sha_exists(raw.sha256)
-                    if content_sha_seen_before:
+                    if repo.sha_exists(raw.sha256):
                         stats.documents_skipped += 1
                         repo.audit("duplicate_file_skipped", "File hash already exists", run_id, source_id=source.source_id, metadata={"sha256": raw.sha256})
                         continue
@@ -73,6 +98,12 @@ class Pipeline:
 
                     rows = extractor.extract(raw.file_id, raw.storage_path) if extractor.can_extract(raw.storage_path) else []
                     repo.insert_staging_rows(rows)
+                    drift = fingerprints.check(source.source_id, classification, rows)
+                    if drift.drifted:
+                        stats.documents_quarantined += 1
+                        repo.add_quarantine(raw.file_id, "layout_drift_detected", {"reasons": drift.reasons}, classification.confidence_score)
+                        repo.audit("layout_drift_detected", "Current extraction differs from last known good baseline", run_id, raw.file_id, source.source_id, {"reasons": drift.reasons})
+                        continue
                     try:
                         holdings = validate_holdings(rows, classification, raw)
                     except ValidationError as exc:
@@ -80,6 +111,7 @@ class Pipeline:
                         repo.add_quarantine(raw.file_id, "validation_failed", {"error": str(exc)}, classification.confidence_score)
                         continue
                     stats.documents_published += publisher.publish(holdings)
+                    fingerprints.update(source.source_id, classification, raw, rows)
 
             repo.finish_run(run_id, "succeeded", stats.as_dict())
             return stats

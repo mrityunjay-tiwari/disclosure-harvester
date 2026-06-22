@@ -20,6 +20,30 @@ class Repository:
     def create_run(self, run_id: str) -> None:
         self.db.execute("insert into pipeline_runs (run_id, status) values (?, ?)", [run_id, "running"])
 
+    def upsert_source(self, source_id: str, amc_name: str, url: str, source_type: str, active: bool, validated_end_to_end: bool) -> None:
+        existing = self.db.fetchone("select source_id from sources where source_id = ? and url = ?", [source_id, url])
+        if existing:
+            self.db.execute(
+                """
+                update sources
+                set amc_name = ?,
+                    source_type = ?,
+                    active = ?,
+                    validated_end_to_end = ?,
+                    updated_at = current_timestamp
+                where source_id = ? and url = ?
+                """,
+                [amc_name, source_type, active, validated_end_to_end, source_id, url],
+            )
+            return
+        self.db.execute(
+            """
+            insert into sources (source_id, amc_name, url, source_type, active, validated_end_to_end)
+            values (?, ?, ?, ?, ?, ?)
+            """,
+            [source_id, amc_name, url, source_type, active, validated_end_to_end],
+        )
+
     def finish_run(self, run_id: str, status: str, stats: dict[str, Any], error: str | None = None) -> None:
         self.db.execute(
             """

@@ -34,6 +34,14 @@ Fixture mode does not depend on live AMC websites and is useful for grading or o
 python -m harvester.main run-fixtures
 ```
 
+## Run Static Live Discovery
+
+This mode is useful for simple HTML pages. Dynamic AMC pages will be handled by Playwright in a later pipeline layer.
+
+```bash
+python -m harvester.main run-live-static
+```
+
 The local warehouse is created automatically at:
 
 ```text

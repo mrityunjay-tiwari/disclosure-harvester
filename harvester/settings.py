@@ -16,6 +16,7 @@ class Settings:
     quarantine_dir: Path = data_dir / "quarantine"
     request_timeout_seconds: int = 30
     retry_count: int = 3
+    retry_initial_delay_seconds: float = 1.0
     confidence_auto_process_threshold: int = 80
     confidence_manual_review_threshold: int = 50
 

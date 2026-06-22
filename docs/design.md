@@ -52,6 +52,8 @@ Drift compares current extraction to the last known good baseline stored in `lay
 
 Signals include missing headers, row-count anomalies, page-count changes, confidence drops, and zero extracted tables. Successful published documents update the baseline.
 
+Source discovery failures are treated as source health problems. The system retries with exponential backoff, records an audit event, and continues with the remaining sources instead of stopping the full run.
+
 ## Idempotency
 
 The system uses two identities:
