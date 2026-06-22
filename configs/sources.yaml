@@ -35,3 +35,88 @@ sources:
     document_keywords:
       - monthly portfolio
       - portfolio
+
+  - source_id: nippon_portfolio
+    amc_name: Nippon India Mutual Fund
+    urls:
+      - https://mf.nipponindiaim.com/investor-service/downloads/factsheet-portfolio-and-other-disclosures
+    source_type: js
+    active: false
+    validated_end_to_end: false
+    document_keywords:
+      - portfolio
+      - factsheet
+      - disclosure
+
+  - source_id: kotak_statutory_disclosure
+    amc_name: Kotak Mahindra Mutual Fund
+    urls:
+      - https://www.kotakmf.com/Information/statutory-disclosure
+    source_type: js
+    active: false
+    validated_end_to_end: false
+    document_keywords:
+      - statutory disclosure
+      - monthly portfolio
+      - portfolio
+
+  - source_id: aditya_birla_portfolio
+    amc_name: Aditya Birla Sun Life Mutual Fund
+    urls:
+      - https://mutualfund.adityabirlacapital.com/forms-and-downloads/portfolio
+    source_type: js
+    active: false
+    validated_end_to_end: false
+    document_keywords:
+      - portfolio
+      - monthly
+      - disclosure
+
+  - source_id: uti_disclosures
+    amc_name: UTI Mutual Fund
+    urls:
+      - https://www.utimf.com/statutory-disclosures
+      - https://www.utimf.com/downloads/fact-sheet
+    source_type: js
+    active: false
+    validated_end_to_end: false
+    document_keywords:
+      - statutory disclosures
+      - fact sheet
+      - portfolio
+
+  - source_id: axis_statutory_disclosures
+    amc_name: Axis Mutual Fund
+    urls:
+      - https://www.axismf.com/statutory-disclosures
+    source_type: js
+    active: false
+    validated_end_to_end: false
+    document_keywords:
+      - statutory disclosures
+      - portfolio
+      - monthly
+
+  - source_id: mirae_asset_portfolio
+    amc_name: Mirae Asset Mutual Fund
+    urls:
+      - https://www.miraeassetmf.co.in/downloads/portfolio
+    source_type: js
+    active: false
+    validated_end_to_end: false
+    document_keywords:
+      - portfolio
+      - monthly
+      - disclosure
+
+  - source_id: dsp_statutory_disclosures
+    amc_name: DSP Mutual Fund
+    urls:
+      - https://www.dspim.com
+    source_type: js
+    active: false
+    validated_end_to_end: false
+    document_keywords:
+      - statutory disclosures
+      - portfolio
+      - monthly

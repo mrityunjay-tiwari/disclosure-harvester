@@ -15,9 +15,15 @@ class DoctorAndConfigTests(unittest.TestCase):
 
     def test_config_has_dynamic_validated_sources(self):
         sources = load_sources(Path(__file__).resolve().parents[1] / "configs" / "sources.yaml")
-        self.assertGreaterEqual(len(sources), 3)
+        self.assertGreaterEqual(len(sources), 10)
         self.assertTrue(any(source.source_type == "js" for source in sources))
         self.assertTrue(any(source.validated_end_to_end for source in sources))
+
+    def test_only_validated_demo_sources_are_active(self):
+        sources = load_sources(Path(__file__).resolve().parents[1] / "configs" / "sources.yaml")
+        active_sources = [source for source in sources if source.active]
+        self.assertEqual(len(active_sources), 3)
+        self.assertTrue(all(source.validated_end_to_end for source in active_sources))
 
 
 if __name__ == "__main__":

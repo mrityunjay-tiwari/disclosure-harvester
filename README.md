@@ -96,6 +96,16 @@ If `pytest` is installed, this also works:
 pytest
 ```
 
+## Source Coverage
+
+The first three sources are active for the demo path. Additional AMCs from the assignment prompt are included in `configs/sources.yaml` as inactive discovery-ready entries. They can be enabled one at a time after parser validation.
+
+## Included Documents
+
+- [Design document](docs/design.md)
+- [Runbook](docs/runbook.md)
+- [Sample output](docs/sample_output.md)
+
 ## Production Note
 
 DuckDB is used for local demo mode because it requires no server. PostgreSQL can be added later by replacing the database adapter while keeping the same schema concepts.

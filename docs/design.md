@@ -6,6 +6,10 @@ Disclosure Harvester collects AMC monthly disclosure files, classifies them, ext
 
 The system is not designed to pretend external websites never fail. It is designed to avoid silent data corruption. When confidence is low, metadata conflicts, extraction fails, or layout drift appears, the document is quarantined.
 
+## Scope
+
+The demo proves the full pipeline on the active configured sources and deterministic fixtures. Additional AMC sources are included as inactive discovery-ready configuration so they can be enabled after parser validation without changing application code.
+
 ## Pipeline
 
 ```text

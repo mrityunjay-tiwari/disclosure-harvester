@@ -37,3 +37,10 @@ If the AMC posts a corrected file for the same period, the new SHA256 allows it 
 3. Run `python -m harvester.main run-fixtures`.
 4. Run fixture mode again to show duplicate hash skipping.
 5. Inspect `docs/design.md` for drift, confidence, and idempotency reasoning.
+
+## Enable An Inactive AMC
+
+1. Change `active` to `true` for one source in `configs/sources.yaml`.
+2. Run `python -m harvester.main run-live-static` for static validation or `python -m harvester.main run-live` for configured JS/static behavior.
+3. Check `quarantine` and `audit_events`.
+4. Add parser mappings or tests before marking `validated_end_to_end: true`.
