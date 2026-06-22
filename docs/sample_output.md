@@ -45,6 +45,27 @@ Expected shape:
 
 The fixture file contains two schemes and one non-ISIN holding, so it exercises multi-scheme extraction and null-ISIN business-key handling.
 
+## One-Command Verification
+
+```bash
+python -m harvester.main verify
+```
+
+Expected shape:
+
+```json
+{
+  "status": "passed",
+  "checks": {
+    "first_run_published_rows": true,
+    "second_run_skipped_duplicate": true,
+    "published_holdings_present": true,
+    "classification_present": true,
+    "layout_fingerprint_present": true
+  }
+}
+```
+
 ## Test Suite
 
 ```bash

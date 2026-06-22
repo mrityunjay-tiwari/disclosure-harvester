@@ -1,4 +1,5 @@
 import unittest
+import uuid
 from pathlib import Path
 
 from harvester.classify.classifier import Classification
@@ -9,7 +10,9 @@ from harvester.validate.layout_fingerprint import LayoutFingerprintStore
 
 class LayoutFingerprintTests(unittest.TestCase):
     def test_successful_rows_update_baseline_and_missing_header_drifts(self):
-        db = Database(Path("test.duckdb"))
+        tmp_root = Path(__file__).resolve().parents[1] / ".tmp_tests"
+        tmp_root.mkdir(exist_ok=True)
+        db = Database(tmp_root / f"fingerprint_{uuid.uuid4().hex}.duckdb")
         db.initialize(Path(__file__).resolve().parents[1] / "sql" / "001_create_tables.sql")
         store = LayoutFingerprintStore(db)
         classification = Classification(

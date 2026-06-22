@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import time
 from typing import Any, Iterable
 
 
@@ -12,7 +13,7 @@ class Database:
         try:
             import duckdb  # type: ignore
 
-            self.connection = duckdb.connect(str(path))
+            self.connection = self._connect_duckdb_with_retry(duckdb, path)
         except ModuleNotFoundError:
             import sqlite3
 
@@ -48,3 +49,14 @@ class Database:
     def _commit_if_needed(self) -> None:
         if self.engine == "sqlite":
             self.connection.commit()
+
+    @staticmethod
+    def _connect_duckdb_with_retry(duckdb: Any, path: Path) -> Any:
+        last_error: Exception | None = None
+        for _ in range(10):
+            try:
+                return duckdb.connect(str(path))
+            except Exception as exc:
+                last_error = exc
+                time.sleep(0.2)
+        raise last_error or RuntimeError("failed to connect to DuckDB")

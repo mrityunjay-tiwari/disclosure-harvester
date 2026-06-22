@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import url2pathname
@@ -10,13 +9,20 @@ from harvester.models import DiscoveredDocument, RawFile
 from harvester.utils import new_id, sha256_bytes
 
 
+class DownloadError(Exception):
+    pass
+
+
 class Downloader:
     def __init__(self, raw_dir: Path, timeout_seconds: int = 30):
         self.raw_dir = raw_dir
         self.timeout_seconds = timeout_seconds
 
     def download(self, doc: DiscoveredDocument, run_id: str, already_seen: bool) -> RawFile:
-        content = self._read(doc.document_url)
+        try:
+            content = self._read(doc.document_url)
+        except Exception as exc:
+            raise DownloadError(f"failed to download {doc.document_url}: {exc}") from exc
         sha256 = sha256_bytes(content)
         extension = doc.file_type if doc.file_type != "unknown" else "bin"
         target_dir = self.raw_dir / doc.source_id / run_id

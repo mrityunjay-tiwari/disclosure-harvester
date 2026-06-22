@@ -6,12 +6,15 @@ import json
 from harvester.doctor import run_doctor
 from harvester.observability.logger import configure_logging, get_logger
 from harvester.pipeline import Pipeline
+from harvester.verify import run_verification
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Disclosure Harvester")
+    parser.add_argument("--verbose", action="store_true", help="Emit structured JSON logs to stderr")
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("doctor", help="Check local runtime dependencies")
+    subparsers.add_parser("verify", help="Run deterministic end-to-end verification")
     subparsers.add_parser("run-fixtures", help="Run deterministic fixture pipeline")
     subparsers.add_parser("run-live", help="Run live discovery using source-configured static or browser discovery")
     subparsers.add_parser("run-live-static", help="Run live discovery for static sources")
@@ -19,13 +22,18 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
-    configure_logging()
-    logger = get_logger("harvester.cli")
     args = build_parser().parse_args()
+    logger = get_logger("harvester.cli")
+    if args.verbose:
+        configure_logging()
     if args.command == "doctor":
         print(json.dumps(run_doctor(), indent=2, sort_keys=True))
         return
-    logger.info("pipeline_started", extra={"metadata": {"command": args.command}})
+    if args.command == "verify":
+        print(json.dumps(run_verification(), indent=2, sort_keys=True))
+        return
+    if args.verbose:
+        logger.info("pipeline_started", extra={"metadata": {"command": args.command}})
     if args.command == "run-fixtures":
         stats = Pipeline().run_fixtures()
     elif args.command == "run-live":
@@ -34,7 +42,8 @@ def main() -> None:
         stats = Pipeline().run_live_static()
     else:
         raise ValueError(f"unknown command: {args.command}")
-    logger.info("pipeline_finished", extra={"metadata": stats.as_dict()})
+    if args.verbose:
+        logger.info("pipeline_finished", extra={"metadata": stats.as_dict()})
     print(json.dumps(stats.as_dict(), indent=2, sort_keys=True))
 
 

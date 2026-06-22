@@ -7,7 +7,7 @@ from harvester.config import load_sources
 from harvester.discovery.browser_discovery import BrowserDiscovery
 from harvester.discovery.fixture_discovery import FixtureDiscovery
 from harvester.discovery.static_discovery import StaticDiscovery
-from harvester.download.downloader import Downloader
+from harvester.download.downloader import DownloadError, Downloader
 from harvester.extract.base import ExtractionError
 from harvester.extract.registry import ExtractorRegistry
 from harvester.load.database import Database
@@ -45,9 +45,10 @@ class Pipeline:
     def run_live(self) -> PipelineStats:
         return self._run(mode="live")
 
-    def _run(self, mode: str) -> PipelineStats:
+    def _run(self, mode: str, db: Database | None = None) -> PipelineStats:
         self.settings.ensure_directories()
-        db = Database(self.settings.warehouse_path)
+        owns_db = db is None
+        db = db or Database(self.settings.warehouse_path)
         db.initialize(self.settings.schema_path)
         repo = Repository(db)
         run_id = new_id("run")
@@ -93,7 +94,13 @@ class Pipeline:
                     repo.audit("source_empty", "No documents discovered for active source", run_id, source_id=source.source_id)
                 for doc in docs:
                     repo.insert_discovered(doc)
-                    raw = downloader.download(doc, run_id, already_seen=False)
+                    try:
+                        raw = downloader.download(doc, run_id, already_seen=False)
+                    except DownloadError as exc:
+                        stats.documents_quarantined += 1
+                        repo.add_quarantine(None, "download_failed", {"document_url": doc.document_url, "error": str(exc)})
+                        repo.audit("download_failed", "Document download failed", run_id, source_id=source.source_id, metadata={"document_url": doc.document_url, "error": str(exc)})
+                        continue
                     if repo.sha_exists(raw.sha256):
                         stats.documents_skipped += 1
                         repo.audit("duplicate_file_skipped", "File hash already exists", run_id, source_id=source.source_id, metadata={"sha256": raw.sha256})
@@ -137,4 +144,5 @@ class Pipeline:
             repo.finish_run(run_id, "failed", stats.as_dict(), str(exc))
             raise
         finally:
-            db.close()
+            if owns_db:
+                db.close()

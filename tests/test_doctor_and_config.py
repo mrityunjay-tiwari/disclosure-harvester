@@ -3,6 +3,7 @@ from pathlib import Path
 
 from harvester.config import load_sources
 from harvester.doctor import run_doctor
+from harvester.main import build_parser
 
 
 class DoctorAndConfigTests(unittest.TestCase):
@@ -24,6 +25,11 @@ class DoctorAndConfigTests(unittest.TestCase):
         active_sources = [source for source in sources if source.active]
         self.assertEqual(len(active_sources), 3)
         self.assertTrue(all(source.validated_end_to_end for source in active_sources))
+
+    def test_verbose_flag_is_optional_and_global(self):
+        args = build_parser().parse_args(["--verbose", "run-fixtures"])
+        self.assertTrue(args.verbose)
+        self.assertEqual(args.command, "run-fixtures")
 
 
 if __name__ == "__main__":

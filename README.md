@@ -68,6 +68,12 @@ This mode uses each source's configured type. Sources marked `js` use Playwright
 python -m harvester.main run-live
 ```
 
+Pass `--verbose` before the command to print structured logs:
+
+```bash
+python -m harvester.main --verbose run-fixtures
+```
+
 ## Check Environment
 
 ```bash
@@ -75,6 +81,23 @@ python -m harvester.main doctor
 ```
 
 This reports installed optional dependencies. Fixture tests work with fewer packages; full live discovery needs Playwright and browser binaries.
+
+## One-Command Verification
+
+This is the easiest command for an evaluator to run after installing requirements:
+
+```bash
+python -m harvester.main verify
+```
+
+It creates an isolated verification warehouse, runs the fixture pipeline twice, and reports:
+
+- first run published rows,
+- second run skipped the duplicate file,
+- warehouse table counts,
+- classification, staging, publishing, and layout fingerprint evidence.
+
+Run DuckDB-backed commands one at a time. Parallel local runs can lock the DuckDB WAL file on Windows.
 
 The local warehouse is created automatically at:
 
@@ -104,6 +127,7 @@ The first three sources are active for the demo path. Additional AMCs from the a
 
 - [Design document](docs/design.md)
 - [Runbook](docs/runbook.md)
+- [Grader verification](docs/grader_verification.md)
 - [Sample output](docs/sample_output.md)
 
 ## Production Note

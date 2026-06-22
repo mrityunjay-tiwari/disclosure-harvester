@@ -1,4 +1,5 @@
 import unittest
+import uuid
 from pathlib import Path
 
 from harvester.load.database import Database
@@ -8,7 +9,9 @@ from harvester.publish.publisher import Publisher
 
 class PublisherTests(unittest.TestCase):
     def test_revised_file_supersedes_current_holding(self):
-        db = Database(Path("test.duckdb"))
+        tmp_root = Path(__file__).resolve().parents[1] / ".tmp_tests"
+        tmp_root.mkdir(exist_ok=True)
+        db = Database(tmp_root / f"publisher_{uuid.uuid4().hex}.duckdb")
         db.initialize(Path(__file__).resolve().parents[1] / "sql" / "001_create_tables.sql")
         publisher = Publisher(db)
         first = ValidatedHolding(
