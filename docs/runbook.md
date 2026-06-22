@@ -29,3 +29,11 @@ For dynamic pages, set `source_type: js`. Live mode will use browser discovery a
 ## Handle Revised Files
 
 If the AMC posts a corrected file for the same period, the new SHA256 allows it to be processed. Publishing uses business keys, so changed holdings supersede old current rows. Old rows remain in history with `is_current = false`.
+
+## Demo Checklist
+
+1. Run `python -m harvester.main doctor`.
+2. Run `python -m unittest discover tests`.
+3. Run `python -m harvester.main run-fixtures`.
+4. Run fixture mode again to show duplicate hash skipping.
+5. Inspect `docs/design.md` for drift, confidence, and idempotency reasoning.

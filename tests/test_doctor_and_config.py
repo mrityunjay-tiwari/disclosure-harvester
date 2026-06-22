@@ -1,0 +1,24 @@
+import unittest
+from pathlib import Path
+
+from harvester.config import load_sources
+from harvester.doctor import run_doctor
+
+
+class DoctorAndConfigTests(unittest.TestCase):
+    def test_doctor_reports_core_fields(self):
+        result = run_doctor()
+        self.assertIn("python", result)
+        self.assertIn("dependencies", result)
+        self.assertIn("ready_for_fixture_demo", result)
+        self.assertTrue(any(item["import_name"] == "yaml" for item in result["dependencies"]))
+
+    def test_config_has_dynamic_validated_sources(self):
+        sources = load_sources(Path(__file__).resolve().parents[1] / "configs" / "sources.yaml")
+        self.assertGreaterEqual(len(sources), 3)
+        self.assertTrue(any(source.source_type == "js" for source in sources))
+        self.assertTrue(any(source.validated_end_to_end for source in sources))
+
+
+if __name__ == "__main__":
+    unittest.main()

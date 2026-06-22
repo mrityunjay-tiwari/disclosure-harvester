@@ -19,6 +19,20 @@ The system is designed to fail safely: uncertain files are quarantined instead o
 - Uses an extractor registry for CSV, Excel, PDF, and fixture files.
 - Emits structured JSON logs for pipeline start/finish and stores detailed audit events in the warehouse.
 
+## Assignment Rubric Coverage
+
+| Requirement | Implementation |
+| --- | --- |
+| Source config as data | `configs/sources.yaml` |
+| Static and JS discovery | `StaticDiscovery`, `BrowserDiscovery` |
+| Novelty heuristics | URL normalization and SHA256 hashing |
+| Confidence scoring | `harvester/classify/` |
+| Quarantine | `quarantine` table and pipeline failure paths |
+| Staging -> validated -> published | `staging_rows`, validation rules, `Publisher` |
+| Idempotency | content hashes plus published business keys |
+| Drift detection | `layout_fingerprints` baseline checks |
+| Observability | JSON logs plus `audit_events` |
+
 ## Local Setup
 
 ```bash
@@ -36,6 +50,8 @@ Fixture mode does not depend on live AMC websites and is useful for grading or o
 python -m harvester.main run-fixtures
 ```
 
+Run it twice to demonstrate idempotency. The second run skips the already-seen file hash.
+
 ## Run Static Live Discovery
 
 This mode is useful for simple HTML pages. Dynamic AMC pages will be handled by Playwright in a later pipeline layer.
@@ -51,6 +67,14 @@ This mode uses each source's configured type. Sources marked `js` use Playwright
 ```bash
 python -m harvester.main run-live
 ```
+
+## Check Environment
+
+```bash
+python -m harvester.main doctor
+```
+
+This reports installed optional dependencies. Fixture tests work with fewer packages; full live discovery needs Playwright and browser binaries.
 
 The local warehouse is created automatically at:
 

@@ -56,6 +56,25 @@ Signals include missing headers, row-count anomalies, page-count changes, confid
 
 Source discovery failures are treated as source health problems. The system retries with exponential backoff, records an audit event, and continues with the remaining sources instead of stopping the full run.
 
+## Warehouse Tables
+
+The warehouse contains:
+
+- `sources` for configured AMC URLs.
+- `pipeline_runs` for run-level statistics.
+- `discovered_documents` for discovered document links.
+- `raw_files` for downloaded files and SHA256 hashes.
+- `document_classifications` for AMC, period, type, confidence, and evidence.
+- `staging_rows` for raw parser output.
+- `published_holdings` for current and historical business records.
+- `layout_fingerprints` for drift baselines.
+- `quarantine` for documents that require review.
+- `audit_events` for operational lineage.
+
+## Revised File Policy
+
+If an AMC republishes a corrected file for the same period, the new SHA256 is treated as a new file, but publishing uses the holding business key. Changed current holdings are superseded and replaced by the latest valid version. Old rows remain in history with `is_current = false`.
+
 ## Idempotency
 
 The system uses two identities:
