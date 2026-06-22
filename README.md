@@ -12,11 +12,11 @@ Confirm it does the required things with one setup and one command:
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate
+.venv\Scripts\activate                  # on macOS/Linux:  source .venv/bin/activate
 pip install -r requirements.txt
-python -m playwright install chromium   REM only needed for the optional live run
+python -m playwright install chromium   # only needed for the optional live run
 
-run_demo.bat                            REM Windows;  use  bash run_demo.sh  on macOS/Linux
+run_demo.bat                            # on macOS/Linux:  bash run_demo.sh
 ```
 
 The demo runs four checks in sequence and prints the result of each. Each check maps directly to an assignment requirement:
