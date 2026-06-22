@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 
 from harvester.classify.classifier import Classifier
 from harvester.config import load_sources
+from harvester.discovery.browser_discovery import BrowserDiscovery
 from harvester.discovery.fixture_discovery import FixtureDiscovery
 from harvester.discovery.static_discovery import StaticDiscovery
 from harvester.download.downloader import Downloader
@@ -41,6 +42,9 @@ class Pipeline:
     def run_live_static(self) -> PipelineStats:
         return self._run(mode="live-static")
 
+    def run_live(self) -> PipelineStats:
+        return self._run(mode="live")
+
     def _run(self, mode: str) -> PipelineStats:
         self.settings.ensure_directories()
         db = Database(self.settings.warehouse_path)
@@ -53,6 +57,11 @@ class Pipeline:
             sources = [source for source in load_sources(self.settings.source_config_path) if source.active]
             fixture_discovery = FixtureDiscovery(self.settings.project_root)
             static_discovery = StaticDiscovery(
+                timeout_seconds=self.settings.request_timeout_seconds,
+                retry_count=self.settings.retry_count,
+                retry_initial_delay_seconds=self.settings.retry_initial_delay_seconds,
+            )
+            browser_discovery = BrowserDiscovery(
                 timeout_seconds=self.settings.request_timeout_seconds,
                 retry_count=self.settings.retry_count,
                 retry_initial_delay_seconds=self.settings.retry_initial_delay_seconds,
@@ -70,6 +79,8 @@ class Pipeline:
                 try:
                     if mode == "fixtures":
                         docs = fixture_discovery.discover(source, run_id)
+                    elif mode == "live" and source.source_type == "js":
+                        docs = browser_discovery.discover(source, run_id)
                     else:
                         docs = static_discovery.discover(source, run_id)
                 except Exception as exc:

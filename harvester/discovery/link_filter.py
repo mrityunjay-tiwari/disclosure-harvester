@@ -22,8 +22,7 @@ def extract_document_links(html: str, page_url: str, keywords: list[str]) -> lis
         file_type = file_type_from_path_or_url(absolute)
         text = anchor.get_text(" ", strip=True)
         surrounding = anchor.parent.get_text(" ", strip=True) if anchor.parent else text
-        haystack = normalize_text(" ".join([absolute, text, surrounding]))
-        if file_type in DOCUMENT_EXTENSIONS or any(keyword in haystack for keyword in keyword_text):
+        if is_document_candidate(absolute, text, surrounding, keywords):
             results.append(
                 {
                     "document_url": absolute,
@@ -34,3 +33,12 @@ def extract_document_links(html: str, page_url: str, keywords: list[str]) -> lis
                 }
             )
     return results
+
+
+def is_document_candidate(url: str, link_text: str, surrounding_text: str, keywords: list[str]) -> bool:
+    file_type = file_type_from_path_or_url(url)
+    if file_type in DOCUMENT_EXTENSIONS:
+        return True
+    keyword_text = [normalize_text(keyword) for keyword in keywords]
+    haystack = normalize_text(" ".join([url, link_text, surrounding_text]))
+    return any(keyword in haystack for keyword in keyword_text)

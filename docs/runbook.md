@@ -8,6 +8,8 @@
 4. Check discovered links.
 5. Add parser/header tuning only if validation or drift detection requires it.
 
+For dynamic pages, set `source_type: js`. Live mode will use browser discovery and capture both page links and document URLs seen in network responses.
+
 ## Review Quarantine
 
 1. Open the `quarantine` table.

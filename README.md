@@ -17,6 +17,7 @@ The system is designed to fail safely: uncertain files are quarantined instead o
 - Publishes with business keys, not file IDs, so revised files supersede old rows safely.
 - Stores audit and quarantine records for traceability.
 - Uses an extractor registry for CSV, Excel, PDF, and fixture files.
+- Emits structured JSON logs for pipeline start/finish and stores detailed audit events in the warehouse.
 
 ## Local Setup
 
@@ -41,6 +42,14 @@ This mode is useful for simple HTML pages. Dynamic AMC pages will be handled by 
 
 ```bash
 python -m harvester.main run-live-static
+```
+
+## Run Full Live Discovery
+
+This mode uses each source's configured type. Sources marked `js` use Playwright.
+
+```bash
+python -m harvester.main run-live
 ```
 
 The local warehouse is created automatically at:

@@ -28,6 +28,7 @@ Source Config -> Discovery -> Download + Hashing -> Classification -> Extraction
 - PDF extraction starts with lightweight parsers. Docling is an optional fallback for difficult layouts.
 - Excel extraction uses spreadsheet-native parsers because Excel already contains structured cells.
 - Extraction is selected through a registry. If one parser cannot handle a file, the next eligible parser can try. If no parser succeeds, the file is quarantined with the parser failure reason.
+- Dynamic sources use browser discovery with Playwright. The browser layer inspects rendered links and network responses, then deduplicates discovered document URLs by normalized URL.
 
 ## Confidence Scoring
 
