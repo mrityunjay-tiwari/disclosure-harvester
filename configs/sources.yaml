@@ -1,0 +1,37 @@
+sources:
+  - source_id: sbi_portfolio
+    amc_name: SBI Mutual Fund
+    urls:
+      - https://www.sbimf.com/disclosure
+      - https://www.sbimf.com/portfolios
+    source_type: js
+    active: true
+    validated_end_to_end: true
+    document_keywords:
+      - monthly portfolio
+      - portfolio
+      - disclosure
+    fixture_documents:
+      - tests/fixtures/documents/sbi_monthly_portfolio_june_2026.txt
+
+  - source_id: icici_portfolio
+    amc_name: ICICI Prudential Mutual Fund
+    urls:
+      - https://www.icicipruamc.com/downloads/others/monthly-portfolio-disclosures
+    source_type: js
+    active: true
+    validated_end_to_end: true
+    document_keywords:
+      - monthly portfolio
+      - disclosure
+
+  - source_id: hdfc_portfolio
+    amc_name: HDFC Mutual Fund
+    urls:
+      - https://www.hdfcfund.com/statutory-disclosure/portfolio/monthly-portfolio
+    source_type: js
+    active: true
+    validated_end_to_end: true
+    document_keywords:
+      - monthly portfolio
+      - portfolio

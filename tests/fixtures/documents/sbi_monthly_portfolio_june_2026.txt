@@ -1,0 +1,8 @@
+SBI Mutual Fund
+Monthly Portfolio Disclosure
+For the month ended June 2026
+
+scheme_name,security_name,isin,asset_type,quantity,market_value,percentage_to_nav
+SBI Equity Fund,HDFC Bank Ltd,INE040A01034,equity,1000,1500000,5.20
+SBI Equity Fund,TREPS,,cash_equivalent,0,250000,0.85
+SBI Debt Fund,Government Security,IN0020200015,debt,500,500000,3.10
