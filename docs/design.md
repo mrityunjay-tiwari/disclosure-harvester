@@ -27,6 +27,7 @@ Source Config -> Discovery -> Download + Hashing -> Classification -> Extraction
 - Scheme identity is resolved during extraction because one monthly document can contain many schemes.
 - PDF extraction starts with lightweight parsers. Docling is an optional fallback for difficult layouts.
 - Excel extraction uses spreadsheet-native parsers because Excel already contains structured cells.
+- Extraction is selected through a registry. If one parser cannot handle a file, the next eligible parser can try. If no parser succeeds, the file is quarantined with the parser failure reason.
 
 ## Confidence Scoring
 

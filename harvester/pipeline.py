@@ -7,7 +7,8 @@ from harvester.config import load_sources
 from harvester.discovery.fixture_discovery import FixtureDiscovery
 from harvester.discovery.static_discovery import StaticDiscovery
 from harvester.download.downloader import Downloader
-from harvester.extract.text_fixture_extractor import TextFixtureExtractor
+from harvester.extract.base import ExtractionError
+from harvester.extract.registry import ExtractorRegistry
 from harvester.load.database import Database
 from harvester.load.repository import Repository
 from harvester.publish.publisher import Publisher
@@ -58,7 +59,7 @@ class Pipeline:
             )
             downloader = Downloader(self.settings.raw_dir, self.settings.request_timeout_seconds)
             classifier = Classifier(self.settings)
-            extractor = TextFixtureExtractor()
+            extractor_registry = ExtractorRegistry()
             publisher = Publisher(db)
             fingerprints = LayoutFingerprintStore(db)
 
@@ -96,7 +97,13 @@ class Pipeline:
                         repo.add_quarantine(raw.file_id, "classification_below_threshold_or_conflict", classification.evidence, classification.confidence_score)
                         continue
 
-                    rows = extractor.extract(raw.file_id, raw.storage_path) if extractor.can_extract(raw.storage_path) else []
+                    try:
+                        rows = extractor_registry.extract(raw.file_id, raw.storage_path)
+                    except ExtractionError as exc:
+                        stats.documents_quarantined += 1
+                        repo.add_quarantine(raw.file_id, "extraction_failed", {"error": str(exc)}, classification.confidence_score)
+                        repo.audit("extraction_failed", "No parser produced valid rows", run_id, raw.file_id, source.source_id, {"error": str(exc)})
+                        continue
                     repo.insert_staging_rows(rows)
                     drift = fingerprints.check(source.source_id, classification, rows)
                     if drift.drifted:

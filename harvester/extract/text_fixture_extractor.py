@@ -3,10 +3,11 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
+from harvester.extract.base import Extractor
 from harvester.models import StagingRow
 
 
-class TextFixtureExtractor:
+class TextFixtureExtractor(Extractor):
     parser_name = "text_fixture"
 
     def can_extract(self, path: Path) -> bool:

@@ -16,6 +16,7 @@ The system is designed to fail safely: uncertain files are quarantined instead o
 - Detects layout drift using last-known-good fingerprints.
 - Publishes with business keys, not file IDs, so revised files supersede old rows safely.
 - Stores audit and quarantine records for traceability.
+- Uses an extractor registry for CSV, Excel, PDF, and fixture files.
 
 ## Local Setup
 
