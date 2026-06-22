@@ -35,7 +35,7 @@ If the AMC posts a corrected file for the same period, the new SHA256 allows it 
 1. Run `python -m harvester.main doctor`.
 2. Run `python -m unittest discover tests`.
 3. Run `python -m harvester.main run-fixtures`.
-4. Run fixture mode again to show duplicate hash skipping.
+4. Run `python -m harvester.main verify` to show duplicate hash skipping.
 5. Inspect `docs/design.md` for drift, confidence, and idempotency reasoning.
 
 ## Enable An Inactive AMC

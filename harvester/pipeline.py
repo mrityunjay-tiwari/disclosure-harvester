@@ -93,50 +93,24 @@ class Pipeline:
                 if mode != "fixtures" and not docs:
                     repo.audit("source_empty", "No documents discovered for active source", run_id, source_id=source.source_id)
                 for doc in docs:
-                    repo.insert_discovered(doc)
                     try:
-                        raw = downloader.download(doc, run_id, already_seen=False)
-                    except DownloadError as exc:
+                        self._process_document(
+                            doc,
+                            run_id,
+                            source,
+                            stats,
+                            repo,
+                            downloader,
+                            classifier,
+                            extractor_registry,
+                            fingerprints,
+                            publisher,
+                        )
+                    except Exception as exc:
                         stats.documents_quarantined += 1
-                        repo.add_quarantine(None, "download_failed", {"document_url": doc.document_url, "error": str(exc)})
-                        repo.audit("download_failed", "Document download failed", run_id, source_id=source.source_id, metadata={"document_url": doc.document_url, "error": str(exc)})
+                        repo.add_quarantine(None, "unexpected_processing_error", {"document_url": doc.document_url, "error": str(exc)})
+                        repo.audit("processing_error", "Unexpected error while processing document", run_id, source_id=source.source_id, metadata={"document_url": doc.document_url, "error": str(exc)})
                         continue
-                    if repo.sha_exists(raw.sha256):
-                        stats.documents_skipped += 1
-                        repo.audit("duplicate_file_skipped", "File hash already exists", run_id, source_id=source.source_id, metadata={"sha256": raw.sha256})
-                        continue
-                    repo.insert_raw_file(raw)
-                    stats.documents_downloaded += 1
-
-                    classification = classifier.classify(doc, raw)
-                    repo.insert_classification(classification)
-                    if classification.status == "quarantine":
-                        stats.documents_quarantined += 1
-                        repo.add_quarantine(raw.file_id, "classification_below_threshold_or_conflict", classification.evidence, classification.confidence_score)
-                        continue
-
-                    try:
-                        rows = extractor_registry.extract(raw.file_id, raw.storage_path)
-                    except ExtractionError as exc:
-                        stats.documents_quarantined += 1
-                        repo.add_quarantine(raw.file_id, "extraction_failed", {"error": str(exc)}, classification.confidence_score)
-                        repo.audit("extraction_failed", "No parser produced valid rows", run_id, raw.file_id, source.source_id, {"error": str(exc)})
-                        continue
-                    repo.insert_staging_rows(rows)
-                    drift = fingerprints.check(source.source_id, classification, rows)
-                    if drift.drifted:
-                        stats.documents_quarantined += 1
-                        repo.add_quarantine(raw.file_id, "layout_drift_detected", {"reasons": drift.reasons}, classification.confidence_score)
-                        repo.audit("layout_drift_detected", "Current extraction differs from last known good baseline", run_id, raw.file_id, source.source_id, {"reasons": drift.reasons})
-                        continue
-                    try:
-                        holdings = validate_holdings(rows, classification, raw)
-                    except ValidationError as exc:
-                        stats.documents_quarantined += 1
-                        repo.add_quarantine(raw.file_id, "validation_failed", {"error": str(exc)}, classification.confidence_score)
-                        continue
-                    stats.documents_published += publisher.publish(holdings)
-                    fingerprints.update(source.source_id, classification, raw, rows)
 
             repo.finish_run(run_id, "succeeded", stats.as_dict())
             return stats
@@ -146,3 +120,61 @@ class Pipeline:
         finally:
             if owns_db:
                 db.close()
+
+    def _process_document(
+        self,
+        doc,
+        run_id,
+        source,
+        stats,
+        repo,
+        downloader,
+        classifier,
+        extractor_registry,
+        fingerprints,
+        publisher,
+    ) -> None:
+        repo.insert_discovered(doc)
+        try:
+            raw = downloader.download(doc, run_id, already_seen=False)
+        except DownloadError as exc:
+            stats.documents_quarantined += 1
+            repo.add_quarantine(None, "download_failed", {"document_url": doc.document_url, "error": str(exc)})
+            repo.audit("download_failed", "Document download failed", run_id, source_id=source.source_id, metadata={"document_url": doc.document_url, "error": str(exc)})
+            return
+        if repo.sha_exists(raw.sha256):
+            stats.documents_skipped += 1
+            repo.audit("duplicate_file_skipped", "File hash already exists", run_id, source_id=source.source_id, metadata={"sha256": raw.sha256})
+            return
+        repo.insert_raw_file(raw)
+        stats.documents_downloaded += 1
+
+        classification = classifier.classify(doc, raw)
+        repo.insert_classification(classification)
+        if classification.status == "quarantine":
+            stats.documents_quarantined += 1
+            repo.add_quarantine(raw.file_id, "classification_below_threshold_or_conflict", classification.evidence, classification.confidence_score)
+            return
+
+        try:
+            rows = extractor_registry.extract(raw.file_id, raw.storage_path)
+        except ExtractionError as exc:
+            stats.documents_quarantined += 1
+            repo.add_quarantine(raw.file_id, "extraction_failed", {"error": str(exc)}, classification.confidence_score)
+            repo.audit("extraction_failed", "No parser produced valid rows", run_id, raw.file_id, source.source_id, {"error": str(exc)})
+            return
+        repo.insert_staging_rows(rows)
+        drift = fingerprints.check(source.source_id, classification, rows)
+        if drift.drifted:
+            stats.documents_quarantined += 1
+            repo.add_quarantine(raw.file_id, "layout_drift_detected", {"reasons": drift.reasons}, classification.confidence_score)
+            repo.audit("layout_drift_detected", "Current extraction differs from last known good baseline", run_id, raw.file_id, source.source_id, {"reasons": drift.reasons})
+            return
+        try:
+            holdings = validate_holdings(rows, classification, raw)
+        except ValidationError as exc:
+            stats.documents_quarantined += 1
+            repo.add_quarantine(raw.file_id, "validation_failed", {"error": str(exc)}, classification.confidence_score)
+            return
+        stats.documents_published += publisher.publish(holdings)
+        fingerprints.update(source.source_id, classification, raw, rows)

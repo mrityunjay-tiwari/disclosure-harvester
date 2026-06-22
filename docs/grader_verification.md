@@ -91,3 +91,12 @@ The deterministic proof is `verify`; live mode is included to demonstrate the in
 ## Note On Local DuckDB Files
 
 DuckDB is an embedded database. Run verification commands one at a time, not in parallel, because concurrent local writers can lock the `.duckdb.wal` file on Windows.
+
+To use a fresh database path for any manual one-pass run:
+
+```bash
+python -m harvester.main --warehouse-path data/warehouse/manual_check.duckdb run-fixtures
+python -m harvester.main --warehouse-path data/warehouse/live_check.duckdb run-live
+```
+
+Use `python -m harvester.main verify` for the two-pass duplicate-skip proof. It keeps one managed DuckDB connection open for both passes, which avoids Windows WAL timing issues.

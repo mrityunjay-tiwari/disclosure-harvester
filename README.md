@@ -50,7 +50,7 @@ Fixture mode does not depend on live AMC websites and is useful for grading or o
 python -m harvester.main run-fixtures
 ```
 
-Run it twice to demonstrate idempotency. The second run skips the already-seen file hash.
+Use `python -m harvester.main verify` to demonstrate idempotency. It runs the fixture pipeline twice through one managed database connection and proves that the second pass skips the already-seen file hash.
 
 ## Run Static Live Discovery
 
@@ -98,6 +98,12 @@ It creates an isolated verification warehouse, runs the fixture pipeline twice, 
 - classification, staging, publishing, and layout fingerprint evidence.
 
 Run DuckDB-backed commands one at a time. Parallel local runs can lock the DuckDB WAL file on Windows.
+
+To test against a fresh database without deleting old local generated files:
+
+```bash
+python -m harvester.main --warehouse-path data/warehouse/manual_check.duckdb run-fixtures
+```
 
 The local warehouse is created automatically at:
 

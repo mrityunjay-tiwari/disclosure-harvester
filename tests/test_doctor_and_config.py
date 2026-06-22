@@ -27,8 +27,9 @@ class DoctorAndConfigTests(unittest.TestCase):
         self.assertTrue(all(source.validated_end_to_end for source in active_sources))
 
     def test_verbose_flag_is_optional_and_global(self):
-        args = build_parser().parse_args(["--verbose", "run-fixtures"])
+        args = build_parser().parse_args(["--verbose", "--warehouse-path", "data/warehouse/check.duckdb", "run-fixtures"])
         self.assertTrue(args.verbose)
+        self.assertEqual(args.warehouse_path, "data/warehouse/check.duckdb")
         self.assertEqual(args.command, "run-fixtures")
 
 
